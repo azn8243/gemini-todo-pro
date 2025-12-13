@@ -22,14 +22,14 @@ const getCategoryColor = (category: string) => {
 
 export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
   return (
-    <div className="glass-card p-4 mb-3 animate-fade-in group">
-      <div className="flex items-center gap-4">
+    <div className="glass-card p-4 mb-3 animate-fade-in">
+      <div className="flex items-start gap-3">
         <button
           onClick={() => onToggle(task.id)}
-          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 mt-0.5 ${
             task.completed
-              ? 'bg-secondary border-secondary animate-check-bounce'
-              : 'border-muted-foreground/50 hover:border-secondary'
+              ? 'bg-secondary border-secondary'
+              : 'border-muted-foreground/40 hover:border-secondary'
           }`}
         >
           {task.completed && <Check className="w-3.5 h-3.5 text-secondary-foreground" />}
@@ -37,20 +37,20 @@ export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
 
         <div className="flex-1 min-w-0">
           <h3 
-            className={`text-lg font-medium transition-all duration-200 ${
+            className={`text-base font-medium transition-all duration-200 break-words ${
               task.completed ? 'task-completed text-muted-foreground' : 'text-foreground'
             }`}
           >
             {task.title}
           </h3>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className={`text-sm font-medium ${getCategoryColor(task.category)}`}>
               {task.category}
             </span>
-            <span className="text-muted-foreground/50">•</span>
+            <span className="text-muted-foreground/40">•</span>
             <div className="flex items-center gap-1 text-muted-foreground text-sm">
-              <Clock className="w-3.5 h-3.5" />
-              <span>
+              <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate">
                 {task.completed ? `Completed ${task.completedAt}` : task.time}
               </span>
             </div>
@@ -59,7 +59,7 @@ export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
 
         <button
           onClick={() => onDelete(task.id)}
-          className="p-2 text-muted-foreground/50 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+          className="p-1.5 text-muted-foreground/40 hover:text-destructive transition-colors flex-shrink-0"
         >
           <Trash2 className="w-5 h-5" />
         </button>

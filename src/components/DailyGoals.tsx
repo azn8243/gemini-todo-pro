@@ -9,15 +9,15 @@ export const DailyGoals = ({ stats }: DailyGoalsProps) => {
   const percentage = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
   return (
-    <div className="glass-card p-5 mb-6 animate-fade-in">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-foreground">Daily Goals</h2>
-        <span className="px-3 py-1.5 rounded-full bg-primary/20 text-primary text-sm font-semibold">
+    <div className="glass-card p-4 mb-5 animate-fade-in">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-semibold text-foreground">Daily Goals</h2>
+        <span className="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
           {percentage}% Done
         </span>
       </div>
       
-      <div className="progress-bar mb-4">
+      <div className="progress-bar mb-3">
         <div 
           className="progress-fill" 
           style={{ width: `${percentage}%` }}

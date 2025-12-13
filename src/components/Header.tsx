@@ -1,4 +1,4 @@
-import { Sparkles, Settings } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface HeaderProps {
   isAIEnabled: boolean;
@@ -22,12 +22,12 @@ const getFormattedDate = () => {
 
 export const Header = ({ isAIEnabled, onSettingsClick }: HeaderProps) => {
   return (
-    <header className="flex items-start justify-between mb-8">
-      <div>
-        <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
+    <header className="flex items-start justify-between gap-4 mb-6">
+      <div className="min-w-0 flex-1">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
           {getGreeting()}
         </h1>
-        <p className="text-muted-foreground mt-1 text-lg">{getFormattedDate()}</p>
+        <p className="text-muted-foreground mt-0.5 text-base">{getFormattedDate()}</p>
       </div>
       
       <button
@@ -35,7 +35,7 @@ export const Header = ({ isAIEnabled, onSettingsClick }: HeaderProps) => {
         className={isAIEnabled ? 'ai-badge' : 'ai-badge-disabled'}
       >
         <Sparkles className="w-4 h-4" />
-        <span>{isAIEnabled ? 'AI Enabled' : 'Enable AI'}</span>
+        <span>{isAIEnabled ? 'AI' : 'AI'}</span>
       </button>
     </header>
   );

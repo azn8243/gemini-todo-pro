@@ -29,7 +29,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Toaster position="top-center" />
       
-      <div className="container max-w-lg mx-auto px-5 py-8">
+      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
         <Header 
           isAIEnabled={isEnabled} 
           onSettingsClick={() => setIsSettingsOpen(true)} 
