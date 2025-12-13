@@ -5,6 +5,7 @@ interface TaskItemProps {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onSelect: (task: Task) => void;
 }
 
 const getCategoryColor = (category: string) => {
@@ -20,12 +21,15 @@ const getCategoryColor = (category: string) => {
   }
 };
 
-export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
+export const TaskItem = ({ task, onToggle, onDelete, onSelect }: TaskItemProps) => {
   return (
     <div className="glass-card p-4 mb-3 animate-fade-in">
       <div className="flex items-start gap-3">
         <button
-          onClick={() => onToggle(task.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle(task.id);
+          }}
           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 mt-0.5 ${
             task.completed
               ? 'bg-secondary border-secondary'
@@ -35,7 +39,10 @@ export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
           {task.completed && <Check className="w-3.5 h-3.5 text-secondary-foreground" />}
         </button>
 
-        <div className="flex-1 min-w-0">
+        <button
+          onClick={() => onSelect(task)}
+          className="flex-1 min-w-0 text-left"
+        >
           <h3 
             className={`text-base font-medium transition-all duration-200 break-words ${
               task.completed ? 'task-completed text-muted-foreground' : 'text-foreground'
@@ -55,10 +62,13 @@ export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
               </span>
             </div>
           </div>
-        </div>
+        </button>
 
         <button
-          onClick={() => onDelete(task.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(task.id);
+          }}
           className="p-1.5 text-muted-foreground/40 hover:text-destructive transition-colors flex-shrink-0"
         >
           <Trash2 className="w-5 h-5" />
