@@ -8,9 +8,10 @@ interface TaskListProps {
   filter: FilterOption;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onSelect: (task: Task) => void;
 }
 
-export const TaskList = ({ tasks, filter, onToggle, onDelete }: TaskListProps) => {
+export const TaskList = ({ tasks, filter, onToggle, onDelete, onSelect }: TaskListProps) => {
   const filteredTasks = filter === 'All' 
     ? tasks 
     : tasks.filter(task => task.category === filter);
@@ -36,6 +37,7 @@ export const TaskList = ({ tasks, filter, onToggle, onDelete }: TaskListProps) =
               task={task} 
               onToggle={onToggle}
               onDelete={onDelete}
+              onSelect={onSelect}
             />
           ))}
           {completedTasks.map((task) => (
@@ -44,6 +46,7 @@ export const TaskList = ({ tasks, filter, onToggle, onDelete }: TaskListProps) =
               task={task} 
               onToggle={onToggle}
               onDelete={onDelete}
+              onSelect={onSelect}
             />
           ))}
         </>

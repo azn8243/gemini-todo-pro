@@ -8,6 +8,7 @@ export interface Task {
   completed: boolean;
   completedAt?: string;
   createdAt: string;
+  notes?: string;
 }
 
 export interface DailyStats {
