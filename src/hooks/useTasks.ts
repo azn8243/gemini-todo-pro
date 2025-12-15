@@ -57,12 +57,27 @@ const getInitialTasks = (): Task[] => {
 const getInitialStats = (): DailyStats => {
   const stored = localStorage.getItem(STATS_KEY);
   if (stored) {
-    return JSON.parse(stored);
+    const stats = JSON.parse(stored);
+    const today = new Date().toDateString();
+    const lastDate = stats.lastCompletedDate;
+    
+    // Check if streak should reset (more than 1 day gap)
+    if (lastDate) {
+      const lastDateObj = new Date(lastDate);
+      const todayObj = new Date(today);
+      const diffDays = Math.floor((todayObj.getTime() - lastDateObj.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays > 1) {
+        // Reset streak if more than 1 day gap
+        return { ...stats, streak: 0 };
+      }
+    }
+    return stats;
   }
   return {
     completed: 1,
     total: 5,
-    streak: 3,
+    streak: 1,
     lastCompletedDate: new Date().toDateString(),
   };
 };
@@ -74,7 +89,33 @@ export const useTasks = () => {
   useEffect(() => {
     localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
     const completed = tasks.filter(t => t.completed).length;
-    const newStats = { ...stats, completed, total: tasks.length };
+    const today = new Date().toDateString();
+    
+    let newStreak = stats.streak;
+    
+    // Update streak when completing tasks
+    if (completed > stats.completed && completed > 0) {
+      if (stats.lastCompletedDate !== today) {
+        const lastDate = new Date(stats.lastCompletedDate);
+        const todayDate = new Date(today);
+        const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          // Consecutive day, increment streak
+          newStreak = stats.streak + 1;
+        } else if (diffDays > 1) {
+          // Gap in days, reset streak
+          newStreak = 1;
+        }
+      }
+    }
+    
+    const newStats = { 
+      completed, 
+      total: tasks.length,
+      streak: newStreak,
+      lastCompletedDate: completed > 0 ? today : stats.lastCompletedDate,
+    };
     setStats(newStats);
     localStorage.setItem(STATS_KEY, JSON.stringify(newStats));
   }, [tasks]);

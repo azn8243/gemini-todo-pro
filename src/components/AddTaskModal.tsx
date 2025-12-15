@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Sparkles, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, Loader2, Mic, MicOff } from 'lucide-react';
 import { Category } from '@/types/todo';
 import {
   Dialog,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface AddTaskModalProps {
   isOpen: boolean;
@@ -32,6 +33,53 @@ export const AddTaskModal = ({
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<Category>('Personal');
   const [time, setTime] = useState('12:00');
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+
+  useEffect(() => {
+    // Initialize speech recognition
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognitionAPI) {
+      const recognitionInstance = new SpeechRecognitionAPI();
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = 'en-US';
+      
+      recognitionInstance.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setTitle(prev => prev ? `${prev} ${transcript}` : transcript);
+        setIsListening(false);
+      };
+      
+      recognitionInstance.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        toast.error('Voice input failed. Please try again.');
+        setIsListening(false);
+      };
+      
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+      
+      setRecognition(recognitionInstance);
+    }
+  }, []);
+
+  const toggleVoiceInput = () => {
+    if (!recognition) {
+      toast.error('Voice input not supported in this browser');
+      return;
+    }
+    
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      recognition.start();
+      setIsListening(true);
+      toast.info('Listening... Speak now');
+    }
+  };
 
   const formatTime = (time24: string) => {
     const [hours, minutes] = time24.split(':');
@@ -81,13 +129,24 @@ export const AddTaskModal = ({
             <label className="text-sm font-medium text-muted-foreground mb-2 block">
               Task Title
             </label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={isAIEnabled ? "Type anything, AI will clean it up..." : "Enter task title"}
-              className="bg-muted border-border text-foreground placeholder:text-muted-foreground/50"
-              autoFocus
-            />
+            <div className="flex gap-2">
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={isAIEnabled ? "Type anything, AI will clean it up..." : "Enter task title"}
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground/50 flex-1"
+                autoFocus
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={toggleVoiceInput}
+                className={`border-border shrink-0 ${isListening ? 'bg-destructive/20 text-destructive border-destructive' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </Button>
+            </div>
             {isAIEnabled && (
               <p className="text-xs text-primary mt-2 flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
