@@ -27,6 +27,12 @@ const Index = () => {
     addTask(title, category, time);
   };
 
+  const handleVoiceTask = (title: string) => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    addTask(title, 'Personal', timeStr);
+  };
+
   const handleSelectTask = (task: Task) => {
     setSelectedTask(task);
   };
@@ -61,7 +67,12 @@ const Index = () => {
         />
       </div>
 
-      <FloatingActionButton onClick={() => setIsAddModalOpen(true)} />
+      <FloatingActionButton 
+        onAddClick={() => setIsAddModalOpen(true)} 
+        onVoiceTask={handleVoiceTask}
+        isAIEnabled={isEnabled}
+        onCategorize={categorizeTask}
+      />
 
       <AddTaskModal
         isOpen={isAddModalOpen}
