@@ -1,7 +1,16 @@
 import { useState, useCallback } from 'react';
-import { Category } from '@/types/todo';
+import { Category, Task } from '@/types/todo';
 
 const API_KEY_STORAGE = 'gemini-api-key';
+
+interface AIInsight {
+  type: 'optimization' | 'question' | 'suggestion' | 'schedule';
+  message: string;
+  action?: {
+    label: string;
+    value: string;
+  };
+}
 
 export const useAI = () => {
   const [apiKey, setApiKeyState] = useState<string>(() => {
@@ -20,6 +29,30 @@ export const useAI = () => {
     }
   }, []);
 
+  const callGemini = async (prompt: string): Promise<string> => {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 500,
+          }
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('AI request failed');
+    }
+
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  };
+
   const categorizeTask = useCallback(async (title: string): Promise<{ category: Category; cleanedTitle: string }> => {
     if (!isEnabled) {
       return { category: 'Personal', cleanedTitle: title };
@@ -27,40 +60,15 @@ export const useAI = () => {
 
     setIsProcessing(true);
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `You are a task categorization assistant. Analyze the following task and:
+      const text = await callGemini(`You are a task categorization assistant. Analyze the following task and:
 1. Categorize it into one of these categories: Work, Personal, or Shopping
 2. Clean up the text to make it more professional and clear (fix typos, improve wording)
 
 Task: "${title}"
 
 Respond in JSON format only, no markdown:
-{"category": "Work|Personal|Shopping", "cleanedTitle": "cleaned up task title"}`
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.3,
-              maxOutputTokens: 150,
-            }
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('AI request failed');
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+{"category": "Work|Personal|Shopping", "cleanedTitle": "cleaned up task title"}`);
       
-      // Parse JSON from response
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
@@ -81,11 +89,157 @@ Respond in JSON format only, no markdown:
     }
   }, [apiKey, isEnabled]);
 
+  const optimizeTask = useCallback(async (
+    title: string, 
+    notes: string, 
+    category: Category
+  ): Promise<{ optimizedTitle: string; optimizedNotes: string; insight: AIInsight }> => {
+    if (!isEnabled) {
+      return { 
+        optimizedTitle: title, 
+        optimizedNotes: notes,
+        insight: { type: 'suggestion', message: 'Enable AI to get smart task optimization!' }
+      };
+    }
+
+    setIsProcessing(true);
+    try {
+      const text = await callGemini(`You are a productivity assistant. Optimize this task for clarity and actionability:
+
+Task Title: "${title}"
+Category: ${category}
+Notes: "${notes || 'No notes provided'}"
+
+Provide:
+1. An optimized, action-oriented title (start with a verb, be specific)
+2. Enhanced notes with clear action items, context, or helpful structure
+3. One helpful insight - this could be:
+   - A clarifying question if the task is vague
+   - A scheduling suggestion based on task type
+   - A productivity tip related to this task
+   - A way to break down a complex task
+
+Respond in JSON format only, no markdown:
+{
+  "optimizedTitle": "improved title",
+  "optimizedNotes": "enhanced notes with structure",
+  "insight": {
+    "type": "optimization|question|suggestion|schedule",
+    "message": "your helpful insight or question",
+    "action": {"label": "Apply suggestion", "value": "the suggested improvement"} 
+  }
+}`);
+      
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          optimizedTitle: parsed.optimizedTitle || title,
+          optimizedNotes: parsed.optimizedNotes || notes,
+          insight: parsed.insight || { type: 'suggestion', message: 'Task optimized!' },
+        };
+      }
+      
+      return { 
+        optimizedTitle: title, 
+        optimizedNotes: notes,
+        insight: { type: 'suggestion', message: 'Could not generate optimization.' }
+      };
+    } catch (error) {
+      console.error('AI optimization error:', error);
+      return { 
+        optimizedTitle: title, 
+        optimizedNotes: notes,
+        insight: { type: 'suggestion', message: 'AI optimization failed. Try again.' }
+      };
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [apiKey, isEnabled]);
+
+  const getScheduleInsights = useCallback(async (tasks: Task[]): Promise<AIInsight[]> => {
+    if (!isEnabled || tasks.length === 0) {
+      return [];
+    }
+
+    setIsProcessing(true);
+    try {
+      const taskSummary = tasks.map(t => 
+        `- ${t.title} (${t.category}, ${t.time}, ${t.completed ? 'done' : 'pending'})`
+      ).join('\n');
+
+      const text = await callGemini(`You are a productivity coach. Analyze this task list and provide 2-3 actionable insights:
+
+Today's Tasks:
+${taskSummary}
+
+Provide insights about:
+- Task prioritization suggestions
+- Time management tips based on task types
+- Potential scheduling conflicts or optimizations
+- Motivational nudges if tasks are piling up
+
+Respond in JSON format only, no markdown:
+{
+  "insights": [
+    {"type": "schedule|suggestion|optimization", "message": "your insight"},
+    {"type": "schedule|suggestion|optimization", "message": "another insight"}
+  ]
+}`);
+      
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return parsed.insights || [];
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('AI schedule insights error:', error);
+      return [];
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [apiKey, isEnabled]);
+
+  const askFollowUp = useCallback(async (
+    title: string,
+    notes: string,
+    question: string
+  ): Promise<string> => {
+    if (!isEnabled) {
+      return 'Enable AI to get answers!';
+    }
+
+    setIsProcessing(true);
+    try {
+      const text = await callGemini(`You are a helpful task assistant. The user has a task and is asking a follow-up question.
+
+Task: "${title}"
+Notes: "${notes || 'No notes'}"
+User Question: "${question}"
+
+Provide a helpful, concise response (2-3 sentences max). Be practical and actionable.`);
+      
+      return text.trim() || 'I couldn\'t generate a response. Please try again.';
+    } catch (error) {
+      console.error('AI follow-up error:', error);
+      return 'Failed to get AI response. Check your API key.';
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [apiKey, isEnabled]);
+
   return {
     isEnabled,
     isProcessing,
     apiKey,
     setApiKey,
     categorizeTask,
+    optimizeTask,
+    getScheduleInsights,
+    askFollowUp,
   };
 };
+
+export type { AIInsight };

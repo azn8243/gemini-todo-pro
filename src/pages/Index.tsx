@@ -8,6 +8,7 @@ import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { AddTaskModal } from '@/components/AddTaskModal';
 import { SettingsModal } from '@/components/SettingsModal';
 import { TaskDetailModal } from '@/components/TaskDetailModal';
+import { AIInsightsCard } from '@/components/AIInsightsCard';
 import { useTasks } from '@/hooks/useTasks';
 import { useAI } from '@/hooks/useAI';
 import { Category, Task } from '@/types/todo';
@@ -21,7 +22,16 @@ const Index = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const { tasks, stats, addTask, toggleTask, deleteTask, updateTask } = useTasks();
-  const { isEnabled, isProcessing, apiKey, setApiKey, categorizeTask } = useAI();
+  const { 
+    isEnabled, 
+    isProcessing, 
+    apiKey, 
+    setApiKey, 
+    categorizeTask,
+    optimizeTask,
+    getScheduleInsights,
+    askFollowUp 
+  } = useAI();
 
   const handleAddTask = (title: string, category: Category, time: string) => {
     addTask(title, category, time);
@@ -52,6 +62,15 @@ const Index = () => {
         />
         
         <DailyGoals stats={stats} />
+
+        {isEnabled && (
+          <AIInsightsCard
+            tasks={tasks}
+            isAIEnabled={isEnabled}
+            isProcessing={isProcessing}
+            onGetInsights={getScheduleInsights}
+          />
+        )}
         
         <CategoryFilter 
           activeFilter={activeFilter} 
@@ -95,6 +114,10 @@ const Index = () => {
         isOpen={selectedTask !== null}
         onClose={() => setSelectedTask(null)}
         onSave={handleSaveTask}
+        isAIEnabled={isEnabled}
+        isProcessing={isProcessing}
+        onOptimize={optimizeTask}
+        onAskFollowUp={askFollowUp}
       />
     </div>
   );
