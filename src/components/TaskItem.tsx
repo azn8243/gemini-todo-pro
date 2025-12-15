@@ -1,4 +1,4 @@
-import { Check, Trash2, Clock } from 'lucide-react';
+import { Check, Trash2, Clock, ChevronRight } from 'lucide-react';
 import { Task } from '@/types/todo';
 
 interface TaskItemProps {
@@ -6,59 +6,67 @@ interface TaskItemProps {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onSelect: (task: Task) => void;
+  index: number;
 }
 
-const getCategoryColor = (category: string) => {
+const getCategoryStyles = (category: string) => {
   switch (category) {
     case 'Work':
-      return 'text-secondary';
+      return { text: 'text-secondary', bg: 'bg-secondary/20', glow: 'glow-secondary' };
     case 'Shopping':
-      return 'text-accent';
+      return { text: 'text-accent', bg: 'bg-accent/20', glow: 'glow-accent' };
     case 'Personal':
-      return 'text-[hsl(280,70%,55%)]';
+      return { text: 'text-[hsl(280,70%,55%)]', bg: 'bg-[hsl(280,70%,55%)]/20', glow: '' };
     default:
-      return 'text-muted-foreground';
+      return { text: 'text-muted-foreground', bg: 'bg-muted/20', glow: '' };
   }
 };
 
-export const TaskItem = ({ task, onToggle, onDelete, onSelect }: TaskItemProps) => {
+export const TaskItem = ({ task, onToggle, onDelete, onSelect, index }: TaskItemProps) => {
+  const categoryStyles = getCategoryStyles(task.category);
+  
   return (
-    <div className="glass-card p-4 mb-3 animate-fade-in">
+    <div 
+      className="glass-card p-4 mb-3 animate-fade-in-up hover-lift group"
+      style={{ animationDelay: `${index * 0.05}s` }}
+    >
       <div className="flex items-start gap-3">
         <button
           onClick={(e) => {
             e.stopPropagation();
             onToggle(task.id);
           }}
-          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0 mt-0.5 ${
+          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 flex-shrink-0 mt-0.5 hover:scale-110 ${
             task.completed
-              ? 'bg-secondary border-secondary'
-              : 'border-muted-foreground/40 hover:border-secondary'
+              ? 'checkbox-complete border-transparent'
+              : 'border-muted-foreground/40 hover:border-secondary hover:shadow-lg'
           }`}
         >
-          {task.completed && <Check className="w-3.5 h-3.5 text-secondary-foreground" />}
+          {task.completed && <Check className="w-3.5 h-3.5 text-secondary-foreground animate-scale-in" />}
         </button>
 
         <button
           onClick={() => onSelect(task)}
-          className="flex-1 min-w-0 text-left"
+          className="flex-1 min-w-0 text-left group/text"
         >
-          <h3 
-            className={`text-base font-medium transition-all duration-200 break-words ${
-              task.completed ? 'task-completed text-muted-foreground' : 'text-foreground'
-            }`}
-          >
-            {task.title}
-          </h3>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className={`text-sm font-medium ${getCategoryColor(task.category)}`}>
+          <div className="flex items-center gap-2">
+            <h3 
+              className={`text-base font-medium transition-all duration-300 break-words ${
+                task.completed ? 'task-completed text-muted-foreground' : 'text-foreground group-hover/text:text-primary'
+              }`}
+            >
+              {task.title}
+            </h3>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1" />
+          </div>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${categoryStyles.bg} ${categoryStyles.text}`}>
               {task.category}
             </span>
-            <span className="text-muted-foreground/40">•</span>
             <div className="flex items-center gap-1 text-muted-foreground text-sm">
               <Clock className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="truncate">
-                {task.completed ? `Completed ${task.completedAt}` : task.time}
+                {task.completed ? `Done ${task.completedAt}` : task.time}
               </span>
             </div>
           </div>
@@ -69,7 +77,7 @@ export const TaskItem = ({ task, onToggle, onDelete, onSelect }: TaskItemProps) 
             e.stopPropagation();
             onDelete(task.id);
           }}
-          className="p-1.5 text-muted-foreground/40 hover:text-destructive transition-colors flex-shrink-0"
+          className="p-1.5 text-muted-foreground/40 hover:text-destructive hover:scale-110 transition-all duration-300 flex-shrink-0 opacity-0 group-hover:opacity-100"
         >
           <Trash2 className="w-5 h-5" />
         </button>

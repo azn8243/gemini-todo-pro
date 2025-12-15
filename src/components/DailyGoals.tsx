@@ -1,4 +1,4 @@
-import { Flame } from 'lucide-react';
+import { Flame, Zap, Target } from 'lucide-react';
 import { DailyStats } from '@/types/todo';
 
 interface DailyGoalsProps {
@@ -9,10 +9,17 @@ export const DailyGoals = ({ stats }: DailyGoalsProps) => {
   const percentage = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
   return (
-    <div className="glass-card p-4 mb-5 animate-fade-in">
+    <div className="glass-card p-4 mb-5 animate-fade-in-up hover-lift">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-foreground">Daily Goals</h2>
-        <span className="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
+        <div className="flex items-center gap-2">
+          <Target className="w-5 h-5 text-primary animate-float" />
+          <h2 className="text-lg font-semibold text-foreground">Daily Goals</h2>
+        </div>
+        <span className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-500 ${
+          percentage === 100 
+            ? 'bg-gradient-primary text-primary-foreground animate-scale-bounce glow-primary' 
+            : 'bg-primary/20 text-primary'
+        }`}>
           {percentage}% Done
         </span>
       </div>
@@ -25,12 +32,15 @@ export const DailyGoals = ({ stats }: DailyGoalsProps) => {
       </div>
       
       <div className="flex items-center justify-between text-muted-foreground">
-        <span className="text-sm">
-          {stats.completed}/{stats.total} Tasks Completed
-        </span>
         <div className="flex items-center gap-1.5">
-          <Flame className="w-4 h-4 text-accent" />
-          <span className="text-sm">{stats.streak} Day Streak</span>
+          <Zap className="w-4 h-4 text-secondary animate-pulse" />
+          <span className="text-sm">
+            <span className="text-secondary font-semibold">{stats.completed}</span>/{stats.total} Tasks
+          </span>
+        </div>
+        <div className="streak-badge">
+          <Flame className={`w-4 h-4 ${stats.streak > 0 ? 'animate-wiggle' : ''}`} />
+          <span>{stats.streak} Day Streak</span>
         </div>
       </div>
     </div>

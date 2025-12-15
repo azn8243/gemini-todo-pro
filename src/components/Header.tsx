@@ -22,20 +22,22 @@ const getFormattedDate = () => {
 
 export const Header = ({ isAIEnabled, onSettingsClick }: HeaderProps) => {
   return (
-    <header className="flex items-start justify-between gap-4 mb-6">
+    <header className="flex items-start justify-between gap-4 mb-6 animate-fade-in">
       <div className="min-w-0 flex-1">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight text-gradient-primary animate-slide-in-left">
           {getGreeting()}
         </h1>
-        <p className="text-muted-foreground mt-0.5 text-base">{getFormattedDate()}</p>
+        <p className="text-muted-foreground mt-0.5 text-base animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          {getFormattedDate()}
+        </p>
       </div>
       
       <button
         onClick={onSettingsClick}
-        className={isAIEnabled ? 'ai-badge' : 'ai-badge-disabled'}
+        className={`${isAIEnabled ? 'ai-badge animate-pulse-glow' : 'ai-badge-disabled'} animate-slide-in-right`}
       >
-        <Sparkles className="w-4 h-4" />
-        <span>{isAIEnabled ? 'AI' : 'AI'}</span>
+        <Sparkles className={`w-4 h-4 ${isAIEnabled ? 'animate-wiggle' : ''}`} />
+        <span>AI</span>
       </button>
     </header>
   );
