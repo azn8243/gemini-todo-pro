@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Clock, Sparkles, Save, Loader2, MessageCircle, Wand2, Send, Lightbulb } from 'lucide-react';
-import { Task, Category } from '@/types/todo';
+import { Clock, Sparkles, Save, Loader2, MessageCircle, Wand2, Send, Lightbulb, AlertCircle, Flag, ArrowDown } from 'lucide-react';
+import { Task, Category, Priority } from '@/types/todo';
 import { AIInsight } from '@/hooks/useAI';
 import {
   Dialog,
@@ -29,6 +29,11 @@ interface TaskDetailModalProps {
 }
 
 const categories: Category[] = ['Work', 'Personal', 'Shopping'];
+const priorities: { value: Priority; label: string; icon: React.ElementType; color: string }[] = [
+  { value: 'high', label: 'High', icon: AlertCircle, color: 'text-red-400 border-red-400 bg-red-400/10' },
+  { value: 'medium', label: 'Med', icon: Flag, color: 'text-amber-400 border-amber-400 bg-amber-400/10' },
+  { value: 'low', label: 'Low', icon: ArrowDown, color: 'text-emerald-400 border-emerald-400 bg-emerald-400/10' },
+];
 
 const getCategoryColor = (category: string) => {
   switch (category) {
@@ -81,6 +86,7 @@ export const TaskDetailModal = ({
 }: TaskDetailModalProps) => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<Category>('Personal');
+  const [priority, setPriority] = useState<Priority>('medium');
   const [notes, setNotes] = useState('');
   const [time, setTime] = useState('');
   const [insight, setInsight] = useState<AIInsight | null>(null);
@@ -92,6 +98,7 @@ export const TaskDetailModal = ({
     if (task) {
       setTitle(task.title);
       setCategory(task.category);
+      setPriority(task.priority || 'medium');
       setNotes(task.notes || '');
       setTime(task.time);
       setInsight(null);
@@ -127,6 +134,7 @@ export const TaskDetailModal = ({
     onSave(task.id, {
       title,
       category,
+      priority,
       notes,
       time,
     });
@@ -225,6 +233,33 @@ export const TaskDetailModal = ({
                   {cat}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Priority */}
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              Priority
+            </label>
+            <div className="flex gap-2">
+              {priorities.map((p) => {
+                const Icon = p.icon;
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPriority(p.value)}
+                    className={`flex-1 px-3 py-2 rounded-lg border transition-all duration-200 flex items-center justify-center gap-1.5 text-sm font-medium ${
+                      priority === p.value 
+                        ? p.color
+                        : 'border-border text-muted-foreground hover:border-muted-foreground/50'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {p.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

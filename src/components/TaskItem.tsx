@@ -1,5 +1,5 @@
-import { Check, Trash2, Clock, ChevronRight } from 'lucide-react';
-import { Task } from '@/types/todo';
+import { Check, Trash2, Clock, ChevronRight, Flag, AlertCircle, ArrowDown } from 'lucide-react';
+import { Task, Priority } from '@/types/todo';
 
 interface TaskItemProps {
   task: Task;
@@ -22,12 +22,43 @@ const getCategoryStyles = (category: string) => {
   }
 };
 
+const getPriorityConfig = (priority: Priority) => {
+  switch (priority) {
+    case 'high':
+      return { 
+        icon: AlertCircle, 
+        color: 'text-red-400', 
+        bg: 'bg-red-400/20', 
+        label: 'High',
+        border: 'border-l-red-400'
+      };
+    case 'medium':
+      return { 
+        icon: Flag, 
+        color: 'text-amber-400', 
+        bg: 'bg-amber-400/20', 
+        label: 'Med',
+        border: 'border-l-amber-400'
+      };
+    case 'low':
+      return { 
+        icon: ArrowDown, 
+        color: 'text-emerald-400', 
+        bg: 'bg-emerald-400/20', 
+        label: 'Low',
+        border: 'border-l-emerald-400'
+      };
+  }
+};
+
 export const TaskItem = ({ task, onToggle, onDelete, onSelect, index }: TaskItemProps) => {
   const categoryStyles = getCategoryStyles(task.category);
+  const priorityConfig = getPriorityConfig(task.priority || 'medium');
+  const PriorityIcon = priorityConfig.icon;
   
   return (
     <div 
-      className="glass-card p-4 mb-3 animate-fade-in-up hover-lift group"
+      className={`glass-card p-4 mb-3 animate-fade-in-up hover-lift group border-l-4 ${priorityConfig.border}`}
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       <div className="flex items-start gap-3">
@@ -62,6 +93,10 @@ export const TaskItem = ({ task, onToggle, onDelete, onSelect, index }: TaskItem
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${categoryStyles.bg} ${categoryStyles.text}`}>
               {task.category}
+            </span>
+            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${priorityConfig.bg} ${priorityConfig.color} flex items-center gap-0.5`}>
+              <PriorityIcon className="w-3 h-3" />
+              {priorityConfig.label}
             </span>
             <div className="flex items-center gap-1 text-muted-foreground text-sm">
               <Clock className="w-3.5 h-3.5 flex-shrink-0" />

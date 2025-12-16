@@ -1,4 +1,4 @@
-import { Flame, Zap, Target } from 'lucide-react';
+import { Flame, Zap, Target, Trophy } from 'lucide-react';
 import { DailyStats } from '@/types/todo';
 
 interface DailyGoalsProps {
@@ -32,11 +32,19 @@ export const DailyGoals = ({ stats }: DailyGoalsProps) => {
       </div>
       
       <div className="flex items-center justify-between text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <Zap className="w-4 h-4 text-secondary animate-pulse" />
-          <span className="text-sm">
-            <span className="text-secondary font-semibold">{stats.completed}</span>/{stats.total} Tasks
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <Zap className="w-4 h-4 text-secondary animate-pulse" />
+            <span className="text-sm">
+              <span className="text-secondary font-semibold">{stats.completed}</span>/{stats.total}
+            </span>
+          </div>
+          {stats.totalCompleted > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground/70">
+              <Trophy className="w-3 h-3 text-amber-400" />
+              <span>{stats.totalCompleted} all-time</span>
+            </div>
+          )}
         </div>
         <div className="streak-badge">
           <Flame className={`w-4 h-4 ${stats.streak > 0 ? 'animate-wiggle' : ''}`} />
