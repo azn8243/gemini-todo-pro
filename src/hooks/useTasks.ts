@@ -65,11 +65,21 @@ const getInitialTasks = (): Task[] => {
   ];
 };
 
+const getDaysDifference = (date1: string, date2: string): number => {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  // Reset time to midnight for accurate day comparison
+  d1.setHours(0, 0, 0, 0);
+  d2.setHours(0, 0, 0, 0);
+  return Math.floor((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+};
+
 const getInitialStats = (): DailyStats => {
   const stored = localStorage.getItem(STATS_KEY);
+  const today = new Date().toDateString();
+  
   if (stored) {
     const stats = JSON.parse(stored);
-    const today = new Date().toDateString();
     const lastDate = stats.lastCompletedDate;
     
     // Migrate old stats
@@ -80,23 +90,25 @@ const getInitialStats = (): DailyStats => {
     };
     
     // Check if streak should reset (more than 1 day gap)
-    if (lastDate) {
-      const lastDateObj = new Date(lastDate);
-      const todayObj = new Date(today);
-      const diffDays = Math.floor((todayObj.getTime() - lastDateObj.getTime()) / (1000 * 60 * 60 * 24));
+    if (lastDate && lastDate !== today) {
+      const diffDays = getDaysDifference(lastDate, today);
       
       if (diffDays > 1) {
-        return { ...migratedStats, streak: 0 };
+        // More than 1 day gap - reset streak
+        return { ...migratedStats, streak: 0, completed: 0 };
+      } else if (diffDays === 1) {
+        // Exactly 1 day - streak continues but reset daily completed
+        return { ...migratedStats, completed: 0 };
       }
     }
     return migratedStats;
   }
   return {
-    completed: 1,
+    completed: 0,
     total: 5,
-    streak: 1,
-    lastCompletedDate: new Date().toDateString(),
-    totalCompleted: 1,
+    streak: 0,
+    lastCompletedDate: '',
+    totalCompleted: 0,
     milestones: [],
   };
 };
@@ -115,7 +127,7 @@ export const useTasks = () => {
     let newTotalCompleted = stats.totalCompleted;
     let newMilestones = [...stats.milestones];
     
-    // Track total completions
+    // Track total completions (only count increases)
     if (completed > stats.completed) {
       newTotalCompleted += (completed - stats.completed);
       
@@ -129,16 +141,22 @@ export const useTasks = () => {
     
     // Update streak when completing tasks
     if (completed > stats.completed && completed > 0) {
-      if (stats.lastCompletedDate !== today) {
-        const lastDate = new Date(stats.lastCompletedDate);
-        const todayDate = new Date(today);
-        const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      const lastDate = stats.lastCompletedDate;
+      
+      if (!lastDate || lastDate === '') {
+        // First ever completion
+        newStreak = 1;
+      } else if (lastDate !== today) {
+        const diffDays = getDaysDifference(lastDate, today);
         
         if (diffDays === 1) {
+          // Consecutive day - increment streak
           newStreak = stats.streak + 1;
         } else if (diffDays > 1) {
+          // Gap in days - reset to 1
           newStreak = 1;
         }
+        // If diffDays === 0, we're on the same day, keep current streak
       }
     }
     
