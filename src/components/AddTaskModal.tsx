@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Loader2, Mic, MicOff } from 'lucide-react';
-import { Category } from '@/types/todo';
+import { Sparkles, Loader2, Mic, MicOff, Flag, AlertCircle, ArrowDown } from 'lucide-react';
+import { Category, Priority } from '@/types/todo';
 import {
   Dialog,
   DialogContent,
@@ -14,13 +14,18 @@ import { toast } from 'sonner';
 interface AddTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (title: string, category: Category, time: string) => void;
+  onAdd: (title: string, category: Category, time: string, priority: Priority) => void;
   isAIEnabled: boolean;
   onCategorize: (title: string) => Promise<{ category: Category; cleanedTitle: string }>;
   isProcessing: boolean;
 }
 
 const categories: Category[] = ['Work', 'Personal', 'Shopping'];
+const priorities: { value: Priority; label: string; icon: React.ElementType; color: string }[] = [
+  { value: 'high', label: 'High', icon: AlertCircle, color: 'text-red-400 border-red-400 bg-red-400/10' },
+  { value: 'medium', label: 'Med', icon: Flag, color: 'text-amber-400 border-amber-400 bg-amber-400/10' },
+  { value: 'low', label: 'Low', icon: ArrowDown, color: 'text-emerald-400 border-emerald-400 bg-emerald-400/10' },
+];
 
 export const AddTaskModal = ({ 
   isOpen, 
@@ -32,12 +37,12 @@ export const AddTaskModal = ({
 }: AddTaskModalProps) => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<Category>('Personal');
+  const [priority, setPriority] = useState<Priority>('medium');
   const [time, setTime] = useState('12:00');
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
 
   useEffect(() => {
-    // Initialize speech recognition
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognitionAPI) {
       const recognitionInstance = new SpeechRecognitionAPI();
@@ -45,13 +50,13 @@ export const AddTaskModal = ({
       recognitionInstance.interimResults = false;
       recognitionInstance.lang = 'en-US';
       
-      recognitionInstance.onresult = (event) => {
+      recognitionInstance.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         setTitle(prev => prev ? `${prev} ${transcript}` : transcript);
         setIsListening(false);
       };
       
-      recognitionInstance.onerror = (event) => {
+      recognitionInstance.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
         toast.error('Voice input failed. Please try again.');
         setIsListening(false);
@@ -102,9 +107,10 @@ export const AddTaskModal = ({
       finalCategory = result.category;
     }
 
-    onAdd(finalTitle, finalCategory, formatTime(time));
+    onAdd(finalTitle, finalCategory, formatTime(time), priority);
     setTitle('');
     setCategory('Personal');
+    setPriority('medium');
     setTime('12:00');
     onClose();
   };
@@ -153,6 +159,32 @@ export const AddTaskModal = ({
                 AI will auto-categorize and clean up your task
               </p>
             )}
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              Priority
+            </label>
+            <div className="flex gap-2">
+              {priorities.map((p) => {
+                const Icon = p.icon;
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPriority(p.value)}
+                    className={`flex-1 px-3 py-2 rounded-lg border transition-all duration-200 flex items-center justify-center gap-1.5 text-sm font-medium ${
+                      priority === p.value 
+                        ? p.color
+                        : 'border-border text-muted-foreground hover:border-muted-foreground/50'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {!isAIEnabled && (
