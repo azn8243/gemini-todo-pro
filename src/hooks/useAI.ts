@@ -38,9 +38,9 @@ export const useAI = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
       
-      // Use gemini-1.5-flash which is widely available
+      // Use gemini-2.0-flash-lite which is the latest available model
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 
