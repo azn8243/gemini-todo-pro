@@ -30,17 +30,21 @@ export const useAI = () => {
   }, []);
 
   const callGemini = async (prompt: string): Promise<string> => {
+    if (!apiKey) {
+      throw new Error('No API key configured');
+    }
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
       
+      // Use gemini-1.5-flash which is widely available
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
           },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
@@ -56,16 +60,32 @@ export const useAI = () => {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('AI API error:', response.status, errorText);
-        throw new Error(`AI request failed: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Gemini API error:', response.status, errorData);
+        
+        if (response.status === 400) {
+          throw new Error('Invalid API key or request. Please check your Gemini API key.');
+        } else if (response.status === 403) {
+          throw new Error('API key unauthorized. Enable Gemini API in Google Cloud Console.');
+        } else if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please wait and try again.');
+        }
+        throw new Error(`AI request failed: ${errorData?.error?.message || response.status}`);
       }
 
       const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (!text) {
+        console.error('No text in response:', data);
+        throw new Error('No response from AI');
+      }
+      
+      return text;
     } catch (error: any) {
+      console.error('Gemini call failed:', error);
       if (error.name === 'AbortError') {
-        throw new Error('AI request timed out');
+        throw new Error('AI request timed out. Check your connection.');
       }
       throw error;
     }
